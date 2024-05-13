@@ -45,7 +45,7 @@ class MenuPage extends StatefulWidget {
 class _MenuPageState extends State<MenuPage> {
   @override
   Widget build(BuildContext context) {
-    double btnWidth = MediaQuery.of(context).size.width/3;
+    double btnWidth = MediaQuery.of(context).size.width/2;
     Game.resetGame();
 
     return Scaffold(
