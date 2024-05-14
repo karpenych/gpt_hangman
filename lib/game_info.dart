@@ -15,6 +15,8 @@ class Game{
   static List<String> selectedChar = [];
   static Set<String> lettersLeft = {};
 
+  static Set<String> generatedWords = {};
+
   static void resetGame(){
     selectedChar.clear();
     lettersLeft.clear();

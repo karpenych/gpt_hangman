@@ -70,20 +70,18 @@ class _GamePageState extends State<GamePage> {
                 if (Game.lettersLeft.contains(e)){
                   Game.lettersLeft.remove(e);
                   if (Game.lettersLeft.isEmpty){
-                    print("You WIN!!!!!");
                     Navigator.pushAndRemoveUntil(
                       context,
-                      EndPage.getRoute(),
+                      EndPage.getRoute(true),
                       (Route<dynamic> route) => false
                     );
                   }
                 } else {
                   Game.lives--;
                   if (Game.lives == 0) {
-                    print("Ypu LOSE((((");
                     Navigator.pushAndRemoveUntil(
                       context,
-                      EndPage.getRoute(),
+                      EndPage.getRoute(false),
                       (Route<dynamic> route) => false
                     );
                   }
@@ -230,7 +228,9 @@ class _GamePageState extends State<GamePage> {
           );
         }
         if(snapshot.connectionState == ConnectionState.done){
-          Game.word = snapshot.data.toString().toLowerCase().trim().replaceAll(RegExp(r'[^\w\s]+'), '');
+          Game.word = snapshot.data.toString().trim().replaceAll(RegExp(r'[^\w\s]+'), '');
+          Game.generatedWords.add(Game.word);
+          Game.word = Game.word.toLowerCase();
           Game.wordLetters = Game.word.split('');
           Game.lettersLeft = Game.wordLetters.toSet();
           if (Game.lettersLeft.contains(" ")){
@@ -245,37 +245,41 @@ class _GamePageState extends State<GamePage> {
 
 
   Future<String> generateWordGPT() async{
+    var headers = {
+      "Content-type": "application/json",
+      "Authorization": "Api-Key ${Game.API_TOKEN}",
+      "x-folder-id": Game.FOLDER_ID
+    };
+
+    var body = jsonEncode(
+      {
+        "modelUri": "gpt://${Game.FOLDER_ID}/yandexgpt",
+        "completionOptions": {
+          "stream": true,
+          "temperature": 0.6,
+          "maxTokens": 100,
+        },
+        "messages": [
+          {
+            "role": "system",
+            "text": "У тебя есть безграничный запас слов на любые темы. Я буду говорить тебе тему на английском, а ты будешь загадывать мне любое слово на эту тему, состоящее из одного или двух слов. Формат ответа - просто загаданное слово на английском, слово должно быть без специальных символов и знаков пунктуации. Слова которые тебе нельзя использовать: ${Game.generatedWords.join(", ")}. Эти слова тебе загадывать нельзя."
+          },
+          {
+            "role": "user",
+            "text": "Загадай мне слово на тему ${Game.topic}"
+          }
+        ]
+      }
+    );
+
     var response = await http.post(
       Uri.parse("https://llm.api.cloud.yandex.net/foundationModels/v1/completion"),
-      headers:
-        {
-          "Content-type": "application/json",
-          "Authorization": "Api-Key ${Game.API_TOKEN}",
-          "x-folder-id": Game.FOLDER_ID
-        },
-      body: jsonEncode(
-        {
-          "modelUri": "gpt://${Game.FOLDER_ID}/yandexgpt",
-          "completionOptions": {
-            "stream": true,
-            "temperature": 0.3,
-            "maxTokens": 100,
-          },
-          "messages": [
-            {
-              "role": "system",
-              "text": "У тебя есть безграничный запас слов на любые темы. Я буду говорить тебе тему на английском, а ты будешь загадывать мне любое слово на эту тему, состоящее из одного или двух слов. Формат ответа - просто загаданное слово на английском без специальных символов и знаков пунктуации"
-            },
-            {
-              "role": "user",
-              "text": "Загадай мне слово на тему ${Game.topic}"
-            }
-          ]
-        }
-      )
+      headers: headers,
+      body: body
     );
 
     print(">>>>Post info:");
+    print(">>>>Body: $body");
     print(">>>>>>StatusCode: ${response.statusCode}");
 
     if (response.statusCode == 200) {
