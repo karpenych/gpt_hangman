@@ -8,15 +8,16 @@ import 'menu.dart';
 
 
 class EndPage extends StatefulWidget {
-  const EndPage({super.key});
+  final bool isWin;
+  const EndPage(this.isWin, {super.key});
 
 
-  static getRoute() {
+  static getRoute(bool isWin) {
     return PageRouteBuilder(
         transitionsBuilder: (_, animation, __, widget){
           return FadeTransition(opacity: animation, child: widget,);
         },
-        pageBuilder: (_, __, ___) => const EndPage()
+        pageBuilder: (_, __, ___) => EndPage(isWin)
     );
   }
 
@@ -57,7 +58,7 @@ class _EndPageState extends State<EndPage> {
         style: GoogleFonts.inknutAntiqua(
           textStyle: TextStyle(
             fontSize: 50,
-            color: AppColor.txtMainColor,
+            color: widget.isWin ? AppColor.txtWinColor : AppColor.btnErrorColor,
           )
         )
       ),

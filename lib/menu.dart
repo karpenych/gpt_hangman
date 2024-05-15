@@ -43,10 +43,12 @@ class MenuPage extends StatefulWidget {
 
 
 class _MenuPageState extends State<MenuPage> {
+  final topicController = TextEditingController();
+
+
   @override
   Widget build(BuildContext context) {
     double btnWidth = MediaQuery.of(context).size.width/2;
-    Game.resetGame();
 
     return Scaffold(
       backgroundColor: AppColor.backgroundColor,
@@ -65,8 +67,11 @@ class _MenuPageState extends State<MenuPage> {
       ),
       body: Center(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Expanded(flex: 1, child: buildButtons(context, btnWidth))
+            buildInputField(),
+            const SizedBox(height: 50),
+            buildPlayBtn(topicController.text)
           ],
         ),
       ),
@@ -74,61 +79,55 @@ class _MenuPageState extends State<MenuPage> {
   }
 
 
-  Column buildButtons(BuildContext context, double btnWidth) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        ElevatedButton(
-          onPressed: (){
-            Game.topic = "Flora";
-            Navigator.pushAndRemoveUntil(
-              context,
-              GamePage.getRoute(),
-              (Route<dynamic> route) => false
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColor.btnLightColor,
-            foregroundColor: AppColor.txtMainColor,
-            fixedSize: Size.fromWidth(btnWidth)
+  Widget buildInputField() {
+    return SizedBox(
+      width: MediaQuery.of(context).size.width/1.1,
+      child: TextField(
+        controller: topicController,
+        decoration: InputDecoration(
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: AppColor.btnMainColor, width: 2),
+            borderRadius: BorderRadius.circular(15.0),
           ),
-          child: Text("Flora", style: GoogleFonts.inknutAntiqua(),)
-        ),
-        const SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: (){
-            Game.topic = "Fauna";
-            Navigator.pushAndRemoveUntil(
-              context,
-              GamePage.getRoute(),
-              (Route<dynamic> route) => false
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColor.btnMainColor,
-            foregroundColor: AppColor.txtMainColor,
-            fixedSize: Size.fromWidth(btnWidth)
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: AppColor.btnMainColor, width: 2),
+            borderRadius: BorderRadius.circular(15.0),
           ),
-          child: Text("Fauna", style: GoogleFonts.inknutAntiqua(),)
+          hintText: 'Topic',
+          fillColor: AppColor.txtMainColor,
+          filled: true
         ),
-        const SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: (){
-            Game.topic = "Geography";
-            Navigator.pushAndRemoveUntil(
-              context,
-              GamePage.getRoute(),
-              (Route<dynamic> route) => false
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColor.btnDarkColor,
-            foregroundColor: AppColor.txtMainColor,
-            fixedSize: Size.fromWidth(btnWidth)
-          ),
-          child: Text("Geography",style: GoogleFonts.inknutAntiqua(),)
+        style: GoogleFonts.inknutAntiqua(
+          textStyle: TextStyle(
+            color: AppColor.btnDarkColor
+          )
         ),
-      ],
+      ),
     );
   }
+
+  Widget buildPlayBtn(String topic){
+    return IconButton(
+      onPressed: topic == ""
+      ? null
+      :  () {
+        Game.resetGame();
+        Game.topic = topic;
+        print(">>>>GameTopic: ${Game.topic}");
+        Navigator.pushAndRemoveUntil(
+          context,
+          GamePage.getRoute(),
+          (Route<dynamic> route) => false
+        );
+      },
+      icon: Icon(
+        Icons.play_arrow_rounded,
+        size: 200,
+        color: AppColor.btnDarkColor,
+      ),
+
+    );
+  }
+
+
 }

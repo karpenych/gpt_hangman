@@ -1,4 +1,7 @@
 class Game{
+  static String API_TOKEN = "AQVNyhK4fJ-LSsZORt7GSS5AKdUQ6Uf8daTABHF5";
+  static String FOLDER_ID = "b1gsusfmgj8lasim5eaf";
+
   static List<String> alphabets = [
     "a", "b", "c", "d", "e", "f", "g",
     "h", "i", "j", "k", "l", "m", "n",
@@ -12,11 +15,16 @@ class Game{
   static List<String> selectedChar = [];
   static Set<String> lettersLeft = {};
 
+  static Set<String> generatedWords = {};
+
   static void resetGame(){
     selectedChar.clear();
     lettersLeft.clear();
     wordLetters.clear();
     word = "";
     lives = 5;
+    print("-----Game reseted-----");
   }
+
+
 }

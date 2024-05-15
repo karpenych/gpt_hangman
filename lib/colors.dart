@@ -10,5 +10,6 @@ class AppColor{
   static Color btnErrorColor = const Color(0xffbe5b8b);
 
   static Color txtMainColor = const Color(0xffcdf3ff);
+  static Color txtWinColor = const Color(0xff004d00);
   static Color txtKeyboardColor = Colors.white;
 }

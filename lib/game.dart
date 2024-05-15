@@ -1,10 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:gpt_hangman/letter.dart';
 import 'colors.dart';
-import 'dictionary.dart';
 import 'end.dart';
 import 'game_info.dart';
+import 'menu.dart';
 
 
 
@@ -30,28 +32,26 @@ class GamePage extends StatefulWidget {
 class _GamePageState extends State<GamePage> {
   @override
   Widget build(BuildContext context) {
-    if (Game.word == ""){
-      Game.word = Dictionary.getWord(Game.topic).toLowerCase();
-      Game.wordLetters = Game.word.split('');
-      Game.lettersLeft = Game.wordLetters.toSet();
-      if (Game.lettersLeft.contains(" ")){
-        Game.lettersLeft.remove(" ");
-      }
-    }
-
     return Scaffold(
       backgroundColor: AppColor.backgroundColor,
       body: Padding(
         padding: const EdgeInsets.all(30),
-        child: Column(
-          children: [
-            Expanded(flex: 1, child: buildLives()),
-            Expanded(flex: 3, child: buildTopic()),
-            Expanded(flex: 5, child: buildWord()),
-            Expanded(flex: 3, child: buildKeyboard(context))
-          ],
-        ),
+        child: Game.word == ""
+          ? startNewGame()
+          : buildGameScreen()
       ),
+    );
+  }
+
+
+  Widget buildGameScreen(){
+    return Column(
+      children: [
+        Expanded(flex: 1, child: buildLives()),
+        Expanded(flex: 3, child: buildTopic()),
+        Expanded(flex: 5, child: buildWord()),
+        Expanded(flex: 3, child: buildKeyboard(context))
+      ],
     );
   }
 
@@ -70,20 +70,18 @@ class _GamePageState extends State<GamePage> {
                 if (Game.lettersLeft.contains(e)){
                   Game.lettersLeft.remove(e);
                   if (Game.lettersLeft.isEmpty){
-                    print("You WIN!!!!!");
                     Navigator.pushAndRemoveUntil(
                       context,
-                      EndPage.getRoute(),
+                      EndPage.getRoute(true),
                       (Route<dynamic> route) => false
                     );
                   }
                 } else {
                   Game.lives--;
                   if (Game.lives == 0) {
-                    print("Ypu LOSE((((");
                     Navigator.pushAndRemoveUntil(
                       context,
-                      EndPage.getRoute(),
+                      EndPage.getRoute(false),
                       (Route<dynamic> route) => false
                     );
                   }
@@ -137,6 +135,7 @@ class _GamePageState extends State<GamePage> {
     return Center(
       child: Text(
         Game.topic,
+        textAlign: TextAlign.center,
         style: GoogleFonts.inknutAntiqua(
           textStyle: TextStyle(
             color: AppColor.txtMainColor,
@@ -157,21 +156,142 @@ class _GamePageState extends State<GamePage> {
       children: [
         Icon(
           Icons.favorite,
-          color: AppColor.btnDarkColor,
+          color: Game.lives > 0 ? AppColor.btnDarkColor : AppColor.txtMainColor,
           size: 50,
         ),
-        Text(
-          "${Game.lives}",
-          style: GoogleFonts.inknutAntiqua(
-            textStyle: TextStyle(
-              color: AppColor.btnDarkColor,
-              fontSize: 30
-            )
-          )
-        )
+        Icon(
+          Icons.favorite,
+          color: Game.lives > 1 ? AppColor.btnDarkColor : AppColor.txtMainColor,
+          size: 50,
+        ),
+        Icon(
+          Icons.favorite,
+          color: Game.lives > 2 ? AppColor.btnDarkColor : AppColor.txtMainColor,
+          size: 50,
+        ),
+        Icon(
+          Icons.favorite,
+          color: Game.lives > 3 ? AppColor.btnDarkColor : AppColor.txtMainColor,
+          size: 50,
+        ),
+        Icon(
+          Icons.favorite,
+          color: Game.lives > 4 ? AppColor.btnDarkColor : AppColor.txtMainColor,
+          size: 50,
+        ),
       ],
     );
   }
-  
+
+
+  Widget startNewGame() {
+    return FutureBuilder(
+      future: generateWordGPT(),
+      builder: (context, snapshot){
+        if(snapshot.hasError){
+          return SizedBox(
+            height: double.infinity,
+            width: double.infinity,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "SORRY, ERROR",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inknutAntiqua(
+                      textStyle: TextStyle(
+                        color: AppColor.btnErrorColor,
+                        fontSize: 50,
+                        fontWeight: FontWeight.bold
+                      )
+                    )
+                  ),
+                  ElevatedButton(
+                    onPressed: (){
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MenuPage.getRoute(),
+                        (Route<dynamic> route) => false
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColor.btnErrorColor,
+                      foregroundColor: AppColor.btnDarkColor,
+                      fixedSize: Size.fromWidth(MediaQuery.of(context).size.width/3)
+                    ),
+                    child: Text("Menu", style: GoogleFonts.inknutAntiqua(),)
+                  ),
+                ],
+              )
+            ),
+          );
+        }
+        if(snapshot.connectionState == ConnectionState.done){
+          Game.word = snapshot.data.toString().trim().replaceAll(RegExp(r'[^\w\s]+'), '');
+          Game.generatedWords.add(Game.word);
+          Game.word = Game.word.toLowerCase();
+          Game.wordLetters = Game.word.split('');
+          Game.lettersLeft = Game.wordLetters.toSet();
+          if (Game.lettersLeft.contains(" ")){
+            Game.lettersLeft.remove(" ");
+          }
+          return buildGameScreen();
+        }
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+  }
+
+
+  Future<String> generateWordGPT() async{
+    var headers = {
+      "Content-type": "application/json",
+      "Authorization": "Api-Key ${Game.API_TOKEN}",
+      "x-folder-id": Game.FOLDER_ID
+    };
+
+    var body = jsonEncode(
+      {
+        "modelUri": "gpt://${Game.FOLDER_ID}/yandexgpt",
+        "completionOptions": {
+          "stream": true,
+          "temperature": 0.6,
+          "maxTokens": 100,
+        },
+        "messages": [
+          {
+            "role": "system",
+            "text": "У тебя есть безграничный запас слов на любые темы. Я буду говорить тебе тему на английском, а ты будешь загадывать мне любое слово на эту тему, состоящее из одного или двух слов. Формат ответа - просто загаданное слово на английском, слово должно быть без специальных символов и знаков пунктуации. Слова которые тебе нельзя использовать: ${Game.generatedWords.join(", ")}. Эти слова тебе загадывать нельзя."
+          },
+          {
+            "role": "user",
+            "text": "Загадай мне слово на тему ${Game.topic}"
+          }
+        ]
+      }
+    );
+
+    var response = await http.post(
+      Uri.parse("https://llm.api.cloud.yandex.net/foundationModels/v1/completion"),
+      headers: headers,
+      body: body
+    );
+
+    print(">>>>Post info:");
+    print(">>>>Body: $body");
+    print(">>>>>>StatusCode: ${response.statusCode}");
+
+    if (response.statusCode == 200) {
+      print(">>>>Full answer: ${jsonDecode(response.body)}");
+      final answer = jsonDecode(response.body)["result"]["alternatives"][0]["message"]["text"];
+      print(">>>>Answer: $answer");
+      return answer;
+    } else {
+      print(">>>>generateWordGPT Error: ${response.reasonPhrase}");
+      throw Exception();
+    }
+  }
+
 
 }
