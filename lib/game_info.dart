@@ -13,6 +13,9 @@ class Game{
   static List<String> selectedChar = [];
   static Set<String> lettersLeft = {};
 
+  static String startFact = "";
+  static String endFact = "";
+
   static Set<String> generatedWords = {};
   static Set<String> generatedTopics = {};
 
@@ -21,6 +24,8 @@ class Game{
     lettersLeft.clear();
     wordLetters.clear();
     word = "";
+    startFact = "";
+    endFact = "";
     lives = 5;
     print("-----Game reseted-----");
   }

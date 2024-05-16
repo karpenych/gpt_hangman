@@ -45,10 +45,74 @@ class _GamePageState extends State<GamePage> {
     return Column(
       children: [
         Expanded(flex: 1, child: buildLives()),
-        Expanded(flex: 3, child: buildTopic()),
+        Expanded(flex: 2, child: buildTopic()),
+        Expanded(flex: 2, child: Game.startFact == ""
+          ? generateStartFact()
+          : buildStartFact()
+        ),
         Expanded(flex: 5, child: buildWord()),
         Expanded(flex: 3, child: buildKeyboard(context))
       ],
+    );
+  }
+
+
+  Widget startNewGame() {
+    return FutureBuilder(
+      future: Gpt.generateWordGPT(),
+      builder: (context, snapshot){
+        if(snapshot.hasError){
+          return SizedBox(
+            height: double.infinity,
+            width: double.infinity,
+            child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "SORRY, ERROR",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inknutAntiqua(
+                        textStyle: TextStyle(
+                          color: AppColor.btnErrorColor,
+                          fontSize: 50,
+                          fontWeight: FontWeight.bold
+                        )
+                      )
+                    ),
+                    ElevatedButton(
+                      onPressed: (){
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MenuPage.getRoute(),
+                          (Route<dynamic> route) => false
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColor.btnErrorColor,
+                        foregroundColor: AppColor.btnDarkColor,
+                        fixedSize: Size.fromWidth(MediaQuery.of(context).size.width/3)
+                      ),
+                      child: Text("Menu", style: GoogleFonts.inknutAntiqua(),)
+                    ),
+                  ],
+                )
+            ),
+          );
+        }
+        if(snapshot.connectionState == ConnectionState.done){
+          Game.word = snapshot.data.toString().trim().replaceAll(RegExp(r'[^\w\s]+'), '');
+          Game.generatedWords.add(Game.word);
+          Game.word = Game.word.toLowerCase();
+          Game.wordLetters = Game.word.split('');
+          Game.lettersLeft = Game.wordLetters.toSet();
+          if (Game.lettersLeft.contains(" ")){
+            Game.lettersLeft.remove(" ");
+          }
+          return buildGameScreen();
+        }
+        return const Center(child: CircularProgressIndicator());
+      },
     );
   }
 
@@ -181,64 +245,50 @@ class _GamePageState extends State<GamePage> {
   }
 
 
-  Widget startNewGame() {
+  Widget buildStartFact() {
+    return Center(
+      child: Text(
+        Game.startFact,
+        textAlign: TextAlign.center,
+        style: GoogleFonts.inknutAntiqua(
+          textStyle: TextStyle(
+            color: AppColor.txtMainColor,
+            fontSize: 20,
+          )
+        )
+      ),
+    );
+  }
+
+
+  Widget generateStartFact() {
     return FutureBuilder(
-      future: Gpt.generateWordGPT(),
+      future: Gpt.generateStartFact(),
       builder: (context, snapshot){
         if(snapshot.hasError){
-          return SizedBox(
-            height: double.infinity,
-            width: double.infinity,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "SORRY, ERROR",
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inknutAntiqua(
-                      textStyle: TextStyle(
-                        color: AppColor.btnErrorColor,
-                        fontSize: 50,
-                        fontWeight: FontWeight.bold
-                      )
-                    )
-                  ),
-                  ElevatedButton(
-                    onPressed: (){
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MenuPage.getRoute(),
-                        (Route<dynamic> route) => false
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColor.btnErrorColor,
-                      foregroundColor: AppColor.btnDarkColor,
-                      fixedSize: Size.fromWidth(MediaQuery.of(context).size.width/3)
-                    ),
-                    child: Text("Menu", style: GoogleFonts.inknutAntiqua(),)
-                  ),
-                ],
+          return Center(
+            child: Text(
+              "sorry, error, can't get fact to you(((",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inknutAntiqua(
+                textStyle: TextStyle(
+                  color: AppColor.btnErrorColor,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold
+                )
               )
             ),
           );
         }
         if(snapshot.connectionState == ConnectionState.done){
-          Game.word = snapshot.data.toString().trim().replaceAll(RegExp(r'[^\w\s]+'), '');
-          Game.generatedWords.add(Game.word);
-          Game.word = Game.word.toLowerCase();
-          Game.wordLetters = Game.word.split('');
-          Game.lettersLeft = Game.wordLetters.toSet();
-          if (Game.lettersLeft.contains(" ")){
-            Game.lettersLeft.remove(" ");
-          }
-          return buildGameScreen();
+          Game.startFact = snapshot.data.toString().trim();
+          return buildStartFact();
         }
         return const Center(child: CircularProgressIndicator());
       },
     );
   }
+
 
 
 }
