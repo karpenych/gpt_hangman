@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
+import 'package:gpt_hangman/gpt_settings.dart';
 import 'package:gpt_hangman/letter.dart';
 import 'colors.dart';
 import 'end.dart';
@@ -13,7 +12,6 @@ import 'menu.dart';
 class GamePage extends StatefulWidget {
   const GamePage({super.key});
 
-
   static getRoute() {
     return PageRouteBuilder(
         transitionsBuilder: (_, animation, __, widget){
@@ -22,7 +20,6 @@ class GamePage extends StatefulWidget {
         pageBuilder: (_, __, ___) => const GamePage()
     );
   }
-
 
   @override
   State<GamePage> createState() => _GamePageState();
@@ -186,7 +183,7 @@ class _GamePageState extends State<GamePage> {
 
   Widget startNewGame() {
     return FutureBuilder(
-      future: generateWordGPT(),
+      future: Gpt.generateWordGPT(),
       builder: (context, snapshot){
         if(snapshot.hasError){
           return SizedBox(
@@ -241,56 +238,6 @@ class _GamePageState extends State<GamePage> {
         return const Center(child: CircularProgressIndicator());
       },
     );
-  }
-
-
-  Future<String> generateWordGPT() async{
-    var headers = {
-      "Content-type": "application/json",
-      "Authorization": "Api-Key ${Game.API_TOKEN}",
-      "x-folder-id": Game.FOLDER_ID
-    };
-
-    var body = jsonEncode(
-      {
-        "modelUri": "gpt://${Game.FOLDER_ID}/yandexgpt",
-        "completionOptions": {
-          "stream": true,
-          "temperature": 0.6,
-          "maxTokens": 100,
-        },
-        "messages": [
-          {
-            "role": "system",
-            "text": "У тебя есть безграничный запас слов на любые темы. Я буду говорить тебе тему на английском, а ты будешь загадывать мне любое слово на эту тему, состоящее из одного или двух слов. Формат ответа - просто загаданное слово на английском, слово должно быть без специальных символов и знаков пунктуации. Слова которые тебе нельзя использовать: ${Game.generatedWords.join(", ")}. Эти слова тебе загадывать нельзя."
-          },
-          {
-            "role": "user",
-            "text": "Загадай мне слово на тему ${Game.topic}"
-          }
-        ]
-      }
-    );
-
-    var response = await http.post(
-      Uri.parse("https://llm.api.cloud.yandex.net/foundationModels/v1/completion"),
-      headers: headers,
-      body: body
-    );
-
-    print(">>>>Post info:");
-    print(">>>>Body: $body");
-    print(">>>>>>StatusCode: ${response.statusCode}");
-
-    if (response.statusCode == 200) {
-      print(">>>>Full answer: ${jsonDecode(response.body)}");
-      final answer = jsonDecode(response.body)["result"]["alternatives"][0]["message"]["text"];
-      print(">>>>Answer: $answer");
-      return answer;
-    } else {
-      print(">>>>generateWordGPT Error: ${response.reasonPhrase}");
-      throw Exception();
-    }
   }
 
 

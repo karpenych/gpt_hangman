@@ -11,7 +11,6 @@ class EndPage extends StatefulWidget {
   final bool isWin;
   const EndPage(this.isWin, {super.key});
 
-
   static getRoute(bool isWin) {
     return PageRouteBuilder(
         transitionsBuilder: (_, animation, __, widget){
@@ -20,7 +19,6 @@ class EndPage extends StatefulWidget {
         pageBuilder: (_, __, ___) => EndPage(isWin)
     );
   }
-
 
   @override
   State<EndPage> createState() => _EndPageState();
