@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'colors.dart';
 import 'game.dart';
 import 'game_info.dart';
+import 'gpt_settings.dart';
 import 'menu.dart';
 
 
@@ -10,7 +11,6 @@ import 'menu.dart';
 class EndPage extends StatefulWidget {
   final bool isWin;
   const EndPage(this.isWin, {super.key});
-
 
   static getRoute(bool isWin) {
     return PageRouteBuilder(
@@ -20,7 +20,6 @@ class EndPage extends StatefulWidget {
         pageBuilder: (_, __, ___) => EndPage(isWin)
     );
   }
-
 
   @override
   State<EndPage> createState() => _EndPageState();
@@ -41,7 +40,8 @@ class _EndPageState extends State<EndPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(flex: 1, child: printWord()),
-              Expanded(flex: 1, child: buildButtons(context, btnWidth))
+              Expanded(flex: 8, child: generateEndFact()),
+              Expanded(flex: 2, child: buildButtons(context, btnWidth))
             ],
           ),
         ),
@@ -59,6 +59,7 @@ class _EndPageState extends State<EndPage> {
           textStyle: TextStyle(
             fontSize: 50,
             color: widget.isWin ? AppColor.txtWinColor : AppColor.btnErrorColor,
+            fontWeight: FontWeight.bold,
           )
         )
       ),
@@ -106,6 +107,47 @@ class _EndPageState extends State<EndPage> {
 
     );
   }
+
+
+  Widget generateEndFact() {
+    return FutureBuilder(
+      future: Gpt.generateEndFact(),
+      builder: (context, snapshot){
+        if(snapshot.hasError){
+          return Center(
+            child: Text(
+              "error: ${snapshot.error.toString()}(((",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inknutAntiqua(
+                textStyle: TextStyle(
+                  color: AppColor.btnErrorColor,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold
+                )
+              )
+            ),
+          );
+        }
+        if(snapshot.connectionState == ConnectionState.done){
+          Game.endFact = snapshot.data.toString().trim();
+          return Center(
+            child: Text(
+              Game.endFact,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inknutAntiqua(
+                textStyle: TextStyle(
+                  color: AppColor.txtMainColor,
+                  fontSize: 16,
+                )
+              )
+            ),
+          );
+        }
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+  }
+
 
 
 }

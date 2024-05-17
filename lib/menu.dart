@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:gpt_hangman/game.dart';
+import 'package:gpt_hangman/gpt_settings.dart';
 import 'colors.dart';
 import 'game_info.dart';
 
@@ -26,7 +27,6 @@ class MyApp extends StatelessWidget {
 class MenuPage extends StatefulWidget {
   const MenuPage({super.key});
 
-
   static getRoute() {
     return PageRouteBuilder(
         transitionsBuilder: (_, animation, __, widget){
@@ -36,7 +36,6 @@ class MenuPage extends StatefulWidget {
     );
   }
 
-
   @override
   State<MenuPage> createState() => _MenuPageState();
 }
@@ -44,12 +43,10 @@ class MenuPage extends StatefulWidget {
 
 class _MenuPageState extends State<MenuPage> {
   final topicController = TextEditingController();
-
+  bool isTopicGenerating = false;
 
   @override
   Widget build(BuildContext context) {
-    double btnWidth = MediaQuery.of(context).size.width/2;
-
     return Scaffold(
       backgroundColor: AppColor.backgroundColor,
       appBar: AppBar(
@@ -71,7 +68,7 @@ class _MenuPageState extends State<MenuPage> {
           children: [
             buildInputField(),
             const SizedBox(height: 50),
-            buildPlayBtn(topicController.text)
+            buildPlayBtn()
           ],
         ),
       ),
@@ -80,52 +77,80 @@ class _MenuPageState extends State<MenuPage> {
 
 
   Widget buildInputField() {
-    return SizedBox(
-      width: MediaQuery.of(context).size.width/1.1,
-      child: TextField(
-        controller: topicController,
-        decoration: InputDecoration(
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: AppColor.btnMainColor, width: 2),
-            borderRadius: BorderRadius.circular(15.0),
+    return Column(
+      children: [
+        SizedBox(
+          width: MediaQuery.of(context).size.width/1.1,
+          child: TextField(
+            controller: topicController,
+            decoration: InputDecoration(
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColor.btnMainColor, width: 2),
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: AppColor.btnMainColor, width: 2),
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              hintText: 'Topic',
+              fillColor: AppColor.txtMainColor,
+              filled: true
+            ),
+            style: GoogleFonts.inknutAntiqua(
+              textStyle: TextStyle(
+                color: AppColor.btnDarkColor
+              )
+            ),
           ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: AppColor.btnMainColor, width: 2),
-            borderRadius: BorderRadius.circular(15.0),
+        ),
+        const SizedBox(height: 10),
+        ElevatedButton(
+          onPressed: !isTopicGenerating
+            ? () async{
+                setState(() {
+                  isTopicGenerating = true;
+                  topicController.text = "Generating, please wait...";
+                });
+                topicController.text = await Gpt.generateTopicGPT();
+                setState(() {
+                  Game.generatedTopics.add(topicController.text);
+                  isTopicGenerating = false;
+                });
+              }
+            : null,
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            backgroundColor: AppColor.btnMainColor,
+            foregroundColor: AppColor.txtMainColor,
+            fixedSize: Size.fromWidth(MediaQuery.of(context).size.width/1.5)
           ),
-          hintText: 'Topic',
-          fillColor: AppColor.txtMainColor,
-          filled: true
-        ),
-        style: GoogleFonts.inknutAntiqua(
-          textStyle: TextStyle(
-            color: AppColor.btnDarkColor
-          )
-        ),
-      ),
+          child: Text("Generate topic", style: GoogleFonts.inknutAntiqua(),)
+        )
+      ],
     );
   }
 
-  Widget buildPlayBtn(String topic){
+  Widget buildPlayBtn(){
     return IconButton(
-      onPressed: topic == ""
-      ? null
-      :  () {
-        Game.resetGame();
-        Game.topic = topic;
-        print(">>>>GameTopic: ${Game.topic}");
-        Navigator.pushAndRemoveUntil(
-          context,
-          GamePage.getRoute(),
-          (Route<dynamic> route) => false
-        );
-      },
+      onPressed: !isTopicGenerating && topicController.text != ""
+        ? () {
+            Game.resetGame();
+            Game.topic = topicController.text;
+            print(">>>>GameTopic: ${Game.topic}");
+            Navigator.pushAndRemoveUntil(
+              context,
+              GamePage.getRoute(),
+              (Route<dynamic> route) => false
+            );
+          }
+        : null,
       icon: Icon(
         Icons.play_arrow_rounded,
         size: 200,
-        color: AppColor.btnDarkColor,
+        color: !isTopicGenerating && topicController.text != ""
+          ? AppColor.btnDarkColor
+          : AppColor.appBarColor,
       ),
-
     );
   }
 
