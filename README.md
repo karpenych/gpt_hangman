@@ -16,4 +16,7 @@
 ## Release V1.1
 
 - YandexGPT generate topic
-- 
+- YandexGPT generate start fact
+- YandexGPT generate end fact
+
+  
