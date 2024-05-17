@@ -268,7 +268,7 @@ class _GamePageState extends State<GamePage> {
         if(snapshot.hasError){
           return Center(
             child: Text(
-              "sorry, error, can't get fact to you(((",
+              "error: ${snapshot.error.toString()}(((",
               textAlign: TextAlign.center,
               style: GoogleFonts.inknutAntiqua(
                 textStyle: TextStyle(
@@ -288,7 +288,6 @@ class _GamePageState extends State<GamePage> {
       },
     );
   }
-
 
 
 }
